@@ -277,6 +277,7 @@ function ISWhitelistTable:onRightMouseUp(x, y, item)
 		        end
                 self.context:addOption("Teleport to Vehicle", playerObj, teleportToVehicle, vehicle)
 		        self.context:addOption("CHEAT: Remove Vehicle", playerObj, ISVehicleMechanics.onCheatRemove, vehicle)
+		        self.context:addOption("Meccanica Veicolo", playerObj, ISVehicleMenu.onMechanic, vehicle)
             else
                 print("Vehicle not found: ", vehicleId)
                 local x,y = tonumber(item.item.datas["x"]), tonumber(item.item.datas["y"])
@@ -287,5 +288,31 @@ function ISWhitelistTable:onRightMouseUp(x, y, item)
 end
 
 
+-- if string.match(vehicle:getScript():getName(), "Burnt") or string.match(vehicle:getScript():getName(), "Smashed") then
+-- function ISVehicleMenu.getVehicleDisplayName(vehicle)
+-- 	local name = getText("IGUI_VehicleName" .. vehicle:getScript():getName())
+-- 	if string.match(vehicle:getScript():getName(), "Burnt") then
+-- 		local unburnt = string.gsub(vehicle:getScript():getName(), "Burnt", "")
+-- 		if getTextOrNull("IGUI_VehicleName" .. unburnt) then
+-- 			name = getText("IGUI_VehicleName" .. unburnt)
+-- 		end
+-- 		name = getText("IGUI_VehicleNameBurntCar", name)
+-- 	end
+-- 	return name
+-- end
 
 
+
+-- function ISVehicleMenu.onMechanic(playerObj, vehicle)
+-- 	local ui = getPlayerMechanicsUI(playerObj:getPlayerNum())
+-- 	if ui:isReallyVisible() then
+-- 		ui:close()
+-- 		return
+-- 	end
+
+-- 	local engineHood = nil;
+-- 	local cheat = getCore():getDebug() and getDebugOptions():getBoolean("Cheat.Vehicle.MechanicsAnywhere")
+-- 	if ISVehicleMechanics.cheat or (isClient() and isAdmin()) or cheat then
+-- 		ISTimedActionQueue.add(ISOpenMechanicsUIAction:new(playerObj, vehicle))
+-- 		return;
+-- 	end
