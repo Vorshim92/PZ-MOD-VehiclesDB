@@ -24,35 +24,36 @@ end
 
 local original_ISWhitelistViewer_onOptionMouseDown = ISWhitelistViewer.onOptionMouseDown
 function ISWhitelistViewer:onOptionMouseDown(button, x, y)
-    if self.activeView.tableName == "vehicles" then 
-        if button.internal == "FETCH_DB" then
-            self.activeView:clear();
-            self.activeView:clearFilters();
-            if self.vehiclesDb then
-                self.vehiclesDb = false
-                self.database:setTitle("FETCH DB")
-                ISWhitelistTable.getVehiclesTable(0, self.activeView.tableName)
-                return
-            else
-                self.vehiclesDb = true
-                self.database:setTitle("FETCH CELL")
-                getTableResult(self.activeView.tableName, self.activeView.entriesPerPages)
-                return
-            end
+    if button.internal == "FETCH_DB" and self.activeView.tableName == "vehicles" then
+        self.activeView:clear()
+        self.activeView:clearFilters()
+        if self.vehiclesDb then
+            self.vehiclesDb = false
+            self.database:setTitle("FETCH DB")
+            ISWhitelistTable.getVehiclesTable(0, self.activeView.tableName)
+        else
+            self.vehiclesDb = true
+            self.database:setTitle("FETCH CELL")
+            getTableResult(self.activeView.tableName, self.activeView.entriesPerPages)
         end
-        if button.internal == "REFRESH" then
-            self.activeView:clear();
-            self.activeView:clearFilters();
-            if self.vehiclesDb then
-                getTableResult(self.activeView.tableName, self.activeView.entriesPerPages);
-            else
-                ISWhitelistTable.getVehiclesTable(0, self.activeView.tableName)
-            end
-        end
-    else
-        original_ISWhitelistViewer_onOptionMouseDown(self, button, x, y)
+        return
     end
+
+    if button.internal == "REFRESH" and self.activeView.tableName == "vehicles" then
+        self.activeView:clear()
+        self.activeView:clearFilters()
+        if self.vehiclesDb then
+            getTableResult(self.activeView.tableName, self.activeView.entriesPerPages)
+        else
+            ISWhitelistTable.getVehiclesTable(0, self.activeView.tableName)
+        end
+        return
+    end
+
+    -- For all other cases, call the original handler
+    original_ISWhitelistViewer_onOptionMouseDown(self, button, x, y)
 end
+
 
 local original_ISWhitelistViewer_refreshButtons = ISWhitelistViewer.refreshButtons
 function ISWhitelistViewer:refreshButtons()
@@ -189,5 +190,102 @@ function ISWhitelistViewer:onActivateView()
         print("Warning: activeView or activeView.view is nil in onActivateView")
     end
 end
+
+local original_ISWhitelistTable_createChildren = ISWhitelistTable.createChildren
+function ISWhitelistTable:createChildren()
+    original_ISWhitelistTable_createChildren(self)
+    self.datas.onRightMouseDown = ISWhitelistTable.onRightMouseDownList;
+end
+
+-- function ISWhitelistTable:onListMouseDown(x, y)
+-- print("onListMouseDown")
+-- 	self.parent.datas.selected = 0;
+	
+-- 	local row = self:rowAt(x, y)
+-- 	if row < 1 or row > #self.items then return end
+-- 	if not self.items[row].item.cat then
+-- 		self.selected = row;
+--         print("row: ", row)
+-- 	end
+-- end
+
+-- maybe
+function ISWhitelistTable:onRightMouseDownList(x, y)
+    -- ISWhitelistTable:onListMouseDown(x, y)
+    print("onRightMouseDownList")
+    local row = self:rowAt(x, y)
+    if row < 1 or row > #self.items then
+        return
+    end
+    if not self.items[row].item.cat then
+		self.selected = row;
+        print("row: ", row)
+        local item = self.items[row]
+        print("item: ", item)
+	    if not item then
+            return
+        else 
+	    	self.parent:onRightMouseUp(self:getX() + x, self:getY() + self:getYScroll() + y, item)
+	    end
+	end
+	
+end
+
+local function teleportToVehicle(playerObj, vehicle)
+    if vehicle then
+        playerObj:setX(vehicle:getX())
+        playerObj:setY(vehicle:getY())
+        playerObj:setZ(vehicle:getZ())
+        playerObj:setLx(vehicle:getX())
+        playerObj:setLy(vehicle:getY())
+        playerObj:setLz(vehicle:getZ())
+    end
+end
+
+local function teleportToNoVehicle(playerObj, x,y)
+    if x and y then
+        playerObj:setX(x)
+        playerObj:setY(y)
+        playerObj:setZ(0)
+        playerObj:setLx(x)
+        playerObj:setLy(y)
+        playerObj:setLz(0)
+    end
+end
+
+function ISWhitelistTable:onRightMouseUp(x, y, item)
+    print("onRightMouseUp")
+	local playerObj = getPlayer()
+	self.context = nil
+	if item then
+		local vehicleId = tonumber(item.item.datas["id_vehicle"])
+        if vehicleId then
+            local vehicle = getVehicleById(vehicleId)
+            self.context = ISContextMenu.get(0, x + self:getAbsoluteX(), y + self:getAbsoluteY())
+            if vehicle then
+		        if vehicle:getScript() and vehicle:getScript():getWheelCount() > 0 then
+		        	if vehicle:getPartById("Engine") then
+		        		self.context:addOption("CHEAT: Get Key", playerObj, ISVehicleMechanics.onCheatGetKey, vehicle)
+		        		if vehicle:isHotwired() then
+		        			self.context:addOption("CHEAT: Remove Hotwire", playerObj, ISVehicleMechanics.onCheatHotwire, vehicle, false, false)
+		        		else
+		        			self.context:addOption("CHEAT: Hotwire", playerObj, ISVehicleMechanics.onCheatHotwire, vehicle, true, false)
+		        		end
+		        	end
+		        	self.context:addOption("CHEAT: Repair Vehicle", playerObj, ISVehicleMechanics.onCheatRepair, vehicle)
+		        	self.context:addOption("CHEAT: Set Rust", playerObj, ISVehicleMechanics.onCheatSetRust, vehicle)
+		        end
+                self.context:addOption("Teleport to Vehicle", playerObj, teleportToVehicle, vehicle)
+		        self.context:addOption("CHEAT: Remove Vehicle", playerObj, ISVehicleMechanics.onCheatRemove, vehicle)
+            else
+                print("Vehicle not found: ", vehicleId)
+                local x,y = tonumber(item.item.datas["x"]), tonumber(item.item.datas["y"])
+                self.context:addOption("Teleport to Vehicle", playerObj, teleportToNoVehicle, x, y)
+            end
+        end
+	end
+end
+
+
 
 
