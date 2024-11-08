@@ -90,21 +90,12 @@ end
 
 local original_ISWhitelistViewer_onActivateView = ISWhitelistViewer.onActivateView
 function ISWhitelistViewer:onActivateView()
-    if self.panel.activeView and self.panel.activeView.view then
-        local tableName = self.panel.activeView.view.tableName
-
-
-        if tableName == "vehicles" and not self.vehiclesDb then -- se self.vehiclesDb e' false, fetch cell
-            ISWhitelistTable.instance:getVehiclesTable(0, tableName)
-        else
-            getTableResult(self.panel.activeView.view.tableName, self.panel.activeView.view.entriesPerPages)
-        end
-
+    local tableName = self.panel.activeView.view.tableName
+    if tableName == "vehicles" and not self.vehiclesDb then -- se self.vehiclesDb e' false,fetch cell
+        ISWhitelistTable.instance:getVehiclesTable(0, tableName)
         -- Aggiorna la vista attiva e pulisci i dati
         self.activeView = self.panel.activeView.view
-        self.activeView:clear()
     else
-        -- Se activeView o view sono nil, stampa un avviso
-        print("Warning: activeView or activeView.view is nil in onActivateView")
+        original_ISWhitelistViewer_onActivateView(self)
     end
 end
