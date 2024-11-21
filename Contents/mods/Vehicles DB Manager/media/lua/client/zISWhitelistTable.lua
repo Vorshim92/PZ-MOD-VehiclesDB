@@ -74,7 +74,7 @@ function ISWhitelistTable:onRightMouseUp(x, y, item)
 end
 
 
-function ISWhitelistTable:getVehiclesTable(rowId, tableName)
+function ISWhitelistTable.getVehiclesTable(rowId, tableName)
     print("getVehiclesTable called with rowId:", rowId, "tableName:", tableName)
     local view = ISWhitelistViewer.instance.panel:getView(tableName)
     view.loading = false

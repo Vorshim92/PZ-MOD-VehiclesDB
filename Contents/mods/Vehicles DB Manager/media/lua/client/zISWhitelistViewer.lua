@@ -30,7 +30,7 @@ function ISWhitelistViewer:onOptionMouseDown(button, x, y)
         if self.vehiclesDb then
             self.vehiclesDb = false
             self.database:setTitle("FETCH DB")
-            ISWhitelistTable.instance:getVehiclesTable(0, self.activeView.tableName) -- fetch vehicles from cell
+            ISWhitelistTable.getVehiclesTable(0, self.activeView.tableName) -- fetch vehicles from cell
         else
             self.vehiclesDb = true
             self.database:setTitle("FETCH CELL")
@@ -45,7 +45,7 @@ function ISWhitelistViewer:onOptionMouseDown(button, x, y)
         if self.vehiclesDb then
             getTableResult(self.activeView.tableName, self.activeView.entriesPerPages)
         else
-            ISWhitelistTable.instance:getVehiclesTable(0, self.activeView.tableName)
+            ISWhitelistTable.getVehiclesTable(0, self.activeView.tableName)
         end
         return
     end
@@ -69,30 +69,51 @@ end
 
 local original_ISWhitelistViewer_refresh = ISWhitelistViewer.refresh
 function ISWhitelistViewer:refresh() -- TODO: qui per aggiungere una nuova tabella vehicles.
+    -- print("[VehiclesDb]\tReceived Schema:")
+    -- for tableName, columns in pairs(self.schema) do
+    --     print("[VehiclesDb]\tTable:", tableName)
+    --     for columnIndex, columnData in ipairs(columns) do
+    --         print("[VehiclesDb]\t  Column Index:", columnIndex, "Type:", type(columnData))
+    --         for key, value in pairs(columnData) do
+    --             print("[VehiclesDb]\t    ", key, ":", value)
+    --         end
+    --     end
+    -- end
     original_ISWhitelistViewer_refresh(self)
      -- Add the 'vehicles' table after the loop
-     local vehiclesTab = ISWhitelistTable:new(0, 0, self.panel.width, self.panel.height - self.panel.tabHeight, "vehicles")
-     vehiclesTab.columns = {
-        "id_vehicle",
-        "x",
-        "y",
-        -- Add other columns as needed
-    }
-     vehiclesTab:initialise()
-     self.panel:addView("vehicles", vehiclesTab)
-     vehiclesTab.parent = self
-     if not self.activeView then
-         self.activeView = vehiclesTab
-         ISWhitelistTable.instance:getVehiclesTable(0, "vehicles")
-         vehiclesTab.loading = true
-     end
+     if not self.schema["vehicles"] then
+        self.schema["vehicles"] = {
+            { name = "id_vehicle", type = "string" },
+            { name = "x", type = "float" },
+            { name = "y", type = "float" },
+            -- Add other columns as needed
+        }
+    end
+     -- Now, create the vehicles tab
+    local vehiclesTab = ISWhitelistTable:new(0, 0, self.panel.width, self.panel.height - self.panel.tabHeight, "vehicles")
+    vehiclesTab.columns = self.schema["vehicles"]
+    vehiclesTab:initialise()
+    self.panel:addView("vehicles", vehiclesTab)
+    vehiclesTab.parent = self
+
+    -- Set the active view if not already set
+    if not self.activeView then
+        self.activeView = vehiclesTab
+        if not self.vehiclesDb then
+            ISWhitelistTable.getVehiclesTable(0, "vehicles") -- Fetch data from the CELL
+        else
+            getTableResult("vehicles", vehiclesTab.entriesPerPages) -- Fetch from Java vehicles.db
+        end
+        vehiclesTab.loading = true
+    end
 end
+
 
 local original_ISWhitelistViewer_onActivateView = ISWhitelistViewer.onActivateView
 function ISWhitelistViewer:onActivateView()
     local tableName = self.panel.activeView.view.tableName
     if tableName == "vehicles" and not self.vehiclesDb then -- se self.vehiclesDb e' false,fetch cell
-        ISWhitelistTable.instance:getVehiclesTable(0, tableName)
+        ISWhitelistTable.getVehiclesTable(0, tableName)
         -- Aggiorna la vista attiva e pulisci i dati
         self.activeView = self.panel.activeView.view
     else
