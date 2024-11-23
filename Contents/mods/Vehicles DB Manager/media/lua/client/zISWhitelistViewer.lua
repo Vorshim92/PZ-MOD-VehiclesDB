@@ -83,9 +83,11 @@ function ISWhitelistViewer:refresh() -- TODO: qui per aggiungere una nuova tabel
      -- Add the 'vehicles' table after the loop
      if not self.schema["vehicles"] then
         self.schema["vehicles"] = {
-            { name = "id_vehicle", type = "string" },
+            { name = "id_vehicle", type = "string" }, -- id vehicles is different in cell and db. luamanager script only work with id_vehicle from the cell. so from the db we can't get the vehicle object. we can just acquire his position. 
             { name = "x", type = "float" },
             { name = "y", type = "float" },
+            { name = "script_name", type = "string" },
+            { name = "real_name", type = "string" },
             -- Add other columns as needed
         }
     end

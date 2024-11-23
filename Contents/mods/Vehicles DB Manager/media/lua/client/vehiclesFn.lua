@@ -21,4 +21,9 @@ function VehicleFn.teleportToNoVehicle(playerObj, x,y)
     end
 end
 
+function VehicleFn.onCheatRemove(playerObj, vehicle)
+    ISVehicleMechanics.onCheatRemove(playerObj, vehicle)
+    ISWhitelistViewer.instance.activeView:clear()
+    ISWhitelistViewer.instance.activeView:clearFilters()
+end
 return VehicleFn
