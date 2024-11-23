@@ -170,7 +170,7 @@ function ISWhitelistTable:computeResult(datas)
             for i = 0, datas:size() - 1 do
                 local dbResult = datas:get(i)
                 local script_name = dbResult:getValues():get("script_name")
-                dbResult:getValues():put("real_name", getText("IGUI_VehicleName" .. script_name))
+                dbResult:getValues():put("real_name", getText("IGUI_VehicleName" .. luautils.split(script_name, ".")[2]))
             end
         end
     end

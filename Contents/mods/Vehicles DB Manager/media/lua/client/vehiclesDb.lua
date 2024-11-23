@@ -27,3 +27,12 @@
 -- 		ISTimedActionQueue.add(ISOpenMechanicsUIAction:new(playerObj, vehicle))
 -- 		return;
 -- 	end
+
+
+
+
+
+
+-- lista di tutte le macchine ma intese come "template"
+-- getAllVehicles() -- Processing getAllVehicles index: 243 [VehiclesDb] 	Base.PickUpTruckMccoy
+-- getScriptManager():getAllVehicleScripts() - zombie.scripting.objects.VehicleScript@7ee79808 (userdata)
