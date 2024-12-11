@@ -22,6 +22,7 @@ function ISWhitelistViewer:createChildren()
     self:addChild(self.database)
 end
 
+
 local original_ISWhitelistViewer_onOptionMouseDown = ISWhitelistViewer.onOptionMouseDown
 function ISWhitelistViewer:onOptionMouseDown(button, x, y)
     if button.internal == "FETCH_VEHICLES" and self.activeView.tableName == "vehicles" then

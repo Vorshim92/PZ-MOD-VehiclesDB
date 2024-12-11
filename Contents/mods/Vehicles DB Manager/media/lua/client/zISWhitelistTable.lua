@@ -110,13 +110,22 @@ function ISWhitelistTable.getVehiclesTable(rowId, tableName)
         dbResult.tableName = "vehicles"
 
         local script_name = vehicle:getScript():getName()
+        local real_name = getTextOrNull("IGUI_VehicleName" .. script_name) or "Unknown"
+	    if string.match(script_name, "Burnt") then
+	    	local unburnt = string.gsub(script_name, "Burnt", "")
+	    	if getTextOrNull("IGUI_VehicleName" .. unburnt) then
+	    		real_name = getText("IGUI_VehicleName" .. unburnt)
+	    	end
+	    	real_name = getText("IGUI_VehicleNameBurntCar", real_name);
+	    end
+
         -- Create values as a Lua table with custom methods
         local values = {
             ["id_vehicle"] = tostring(vehicle:getId()),
-            ["x"] = tostring(vehicle:getX()),
-            ["y"] = tostring(vehicle:getY()),
+            ["x"] = tostring(math.floor(vehicle:getX())),
+            ["y"] = tostring(math.floor(vehicle:getY())),
             ["script_name"] = ("Base." .. script_name),
-            ["real_name"] = getText("IGUI_VehicleName" .. script_name),
+            ["real_name"] = real_name,
             -- Add other properties if necessary
         }
         function values:get(key)
@@ -170,7 +179,16 @@ function ISWhitelistTable:computeResult(datas)
             for i = 0, datas:size() - 1 do
                 local dbResult = datas:get(i)
                 local script_name = dbResult:getValues():get("script_name")
-                dbResult:getValues():put("real_name", getText("IGUI_VehicleName" .. luautils.split(script_name, ".")[2]))
+                local script_name = string.gsub(script_name, "Base.", "")
+                local real_name = getTextOrNull("IGUI_VehicleName" .. script_name) or "Unknown"
+	            if string.match(script_name, "Burnt") then
+	            	local unburnt = string.gsub(script_name, "Burnt", "")
+	            	if getTextOrNull("IGUI_VehicleName" .. unburnt) then
+	            		real_name = getText("IGUI_VehicleName" .. unburnt)
+	            	end
+	            	real_name = getText("IGUI_VehicleNameBurntCar", real_name);
+	            end
+                dbResult:getValues():put("real_name", real_name)
             end
         end
     end

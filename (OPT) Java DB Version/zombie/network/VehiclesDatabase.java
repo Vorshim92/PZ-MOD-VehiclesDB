@@ -1,6 +1,5 @@
 package zombie.network;
 
-
 import zombie.ZomboidFileSystem;
 import zombie.core.logger.ExceptionLogger;
 import zombie.iso.IsoObject;
@@ -52,9 +51,13 @@ public class VehiclesDatabase {
                 dbResult.setTableName("vehicles");
 
                 String idString = resultSet.getString("id");
+                String coordX = resultSet.getString("x");
+                String coordY = resultSet.getString("y");
+                String coordXInt = coordX.split("\\.")[0];
+                String coordYInt = coordY.split("\\.")[0];
                 dbResult.getValues().put("id_vehicle", idString);
-                dbResult.getValues().put("x", resultSet.getString("x"));
-                dbResult.getValues().put("y", resultSet.getString("y"));
+                dbResult.getValues().put("x", coordXInt);
+                dbResult.getValues().put("y", coordYInt);
 
                 // Initialize script_name and real_name as "Unknown"
                 dbResult.getValues().put("script_name", "Unknown");
@@ -79,38 +82,54 @@ public class VehiclesDatabase {
 
                 // Prepare the data buffer
                 ByteBuffer dataBuffer = vehicleBuffer.m_bb;
+                // dataBuffer.order(ByteOrder.LITTLE_ENDIAN);
                 dataBuffer.order(ByteOrder.BIG_ENDIAN); // Set byte order if necessary
+
 
                 // Read active flag and class ID
                 boolean active = dataBuffer.get() != 0;
                 byte classID = dataBuffer.get();
                 if (classID != IsoObject.getFactoryVehicle().getClassID()) {
                     System.err.println("Invalid class ID for vehicle ID: " + idString);
+                    // Libero i riferimenti non più utili
+                    dataBuffer = null;
+                    vehicleBuffer = null;
                     continue;
                 }
                 if (!active) {
                     System.err.println("Vehicle ID: " + idString + " is not active");
+                    dataBuffer = null;
+                    vehicleBuffer = null;
                     continue;
                 }
-                // Do NOT reset the buffer position here
-
-                // Load the vehicle
-                BaseVehicle tempVehicle = new BaseVehicle(IsoWorld.instance.CurrentCell);
+                // Load Vehicle
+                BaseVehicle tempVehicle = null;
                 try {
+                    tempVehicle = new BaseVehicle(IsoWorld.instance.CurrentCell);
                     tempVehicle.load(dataBuffer, vehicleBuffer.m_WorldVersion);
 
                     String scriptName = tempVehicle.getScriptName();
-                    // String realName = tempVehicle.getScript().getName();
                     dbResult.getValues().put("script_name", scriptName);
-                    // dbResult.getValues().put("real_name", realName);
+
                 } catch (Exception ex) {
                     System.err.println("Error loading vehicle data for ID: " + idString);
                     ex.printStackTrace();
-                    continue; // Skip this vehicle
+                    // Errore: Non teniamo l'oggetto e andiamo oltre
+                    tempVehicle = null; // non più utilizzato
+                    dataBuffer = null;
+                    vehicleBuffer = null;
+                    continue;
                 }
 
+                // Ora non serve più nulla, liberiamo i riferimenti
+                tempVehicle = null;
+                dataBuffer = null;
+                vehicleBuffer = null;
+
+                // Aggiungiamo ai risultati
                 results.add(dbResult);
             }
+
 
         } catch (SQLException | IOException e) {
             ExceptionLogger.logException(e);
@@ -148,3 +167,4 @@ public class VehiclesDatabase {
         }
     }
 }
+
